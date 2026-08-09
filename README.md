@@ -10,7 +10,6 @@ in the current version.
 - Stores drama data and user reactions in SQLite.
 - Uses Gemini for conversation and review/preference extraction.
 - Uses stored preferences when generating future responses.
-- Optionally loads TV metadata when a TMDB token is configured.
 
 ## Setup
 
