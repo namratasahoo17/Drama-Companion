@@ -2,7 +2,6 @@ from llm import llm
 from core.schemas import RouterOutput
 from core.state import AppState
 
-structured_llm = llm.with_structured_output(RouterOutput)
 
 def format_history(recent_messages):
     """Format recent conversation history for prompt context."""
@@ -36,7 +35,7 @@ Current user message:
 {state["user_input"]}
 """
 
-    result = structured_llm.invoke(prompt)
+    result = llm.with_structured_output(RouterOutput).invoke(prompt)
 
     return {
         **state,

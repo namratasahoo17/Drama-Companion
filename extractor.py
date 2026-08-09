@@ -1,20 +1,44 @@
-"""Text extraction utilities for review and preference data."""
+"""Text extraction utilities for reviews and user preferences."""
 
 import json
+import re
+
 from llm import ask_gemini
 
 
 def _clean_json_response(response: str) -> str:
-    """Strip Markdown fencing and whitespace from model output."""
-    return response.replace("```json", "").replace("```", "").strip()
+    """Remove Markdown fences and surrounding whitespace."""
+    cleaned = response.strip()
+    cleaned = re.sub(r"^```(?:json)?\s*", "", cleaned, flags=re.IGNORECASE)
+    cleaned = re.sub(r"\s*```$", "", cleaned)
+    return cleaned.strip()
+
+
+def _parse_json(response: str, expected_type):
+    """Parse model JSON and raise a clear error for invalid output."""
+    cleaned = _clean_json_response(response)
+    try:
+        data = json.loads(cleaned)
+    except json.JSONDecodeError as exc:
+        raise ValueError(f"Gemini returned invalid JSON: {cleaned}") from exc
+
+    if not isinstance(data, expected_type):
+        raise ValueError(
+            f"Gemini returned {type(data).__name__}; "
+            f"expected {expected_type.__name__}."
+        )
+    return data
 
 
 def extract_review(review_text: str) -> dict:
     """Extract a structured review object from free-form text."""
     prompt = f"""
-Extract the following into JSON.
-Review: {review_text}
-Return only valid JSON matching this schema:
+Extract the user's drama review into JSON.
+
+Review:
+{review_text}
+
+Return only valid JSON matching:
 {{
   "title": "",
   "overall_rating": 0,
@@ -26,21 +50,26 @@ Return only valid JSON matching this schema:
     }}
   ]
 }}
+
+Use a numeric rating from 0 to 10. If an aspect is not mentioned,
+do not invent one.
 """
-    response = ask_gemini(prompt)
-    response = _clean_json_response(response)
-    return json.loads(response)
+    return _parse_json(ask_gemini(prompt), dict)
 
 
 def extract_preferences(review_text: str, category_text: str) -> list:
-    """Extract user preference records from review text."""
+    """Extract preference records from review text."""
     prompt = f"""
-Extract the following into JSON.
-Review: {review_text}
-Return a JSON array of objects like:
-{{"category": " ", "value": " ", "sentiment": 1}}
-Use only categories from this list: {category_text}
+Extract only preferences clearly expressed by the user.
+
+Review:
+{review_text}
+
+Return a JSON array of objects:
+{{"category": "", "value": "", "sentiment": 1}}
+
+Allowed categories: {category_text}
+Sentiment must be between -1 and 1.
+Return [] if no preference is clear.
 """
-    response = ask_gemini(prompt)
-    response = _clean_json_response(response)
-    return json.loads(response)
+    return _parse_json(ask_gemini(prompt), list)

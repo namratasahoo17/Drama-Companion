@@ -1,39 +1,33 @@
 """Database configuration and default drama attribute setup."""
 
+from pathlib import Path
+
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from models import Base, AttributeType
+
+from models import AttributeType, Base
 from seed import DEFAULT_ATTRIBUTES
 
-# SQLite path is stored under the project data folder.
-engine = create_engine("sqlite:///data/drama.db")
-SessionLocal = sessionmaker(bind=engine)
+PROJECT_ROOT = Path(__file__).resolve().parent
+DATA_DIR = PROJECT_ROOT / "data"
+DATA_DIR.mkdir(parents=True, exist_ok=True)
 
-# Create tables on startup if they do not already exist.
+DATABASE_URL = f"sqlite:///{(DATA_DIR / 'drama.db').as_posix()}"
+
+engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
+SessionLocal = sessionmaker(bind=engine, autoflush=False, autocommit=False)
+
 Base.metadata.create_all(bind=engine)
 
 
 def seed_attribute_types() -> None:
-    """Ensure default drama attribute types exist in the database."""
+    """Ensure the default drama attribute types exist."""
     db = SessionLocal()
     try:
         for attribute in DEFAULT_ATTRIBUTES:
-            existing = (
-                db.query(AttributeType)
-                .filter_by(name=attribute["name"])
-                .first()
-            )
-
+            existing = db.query(AttributeType).filter_by(key=attribute["key"]).first()
             if existing is None:
-                db.add(
-                    AttributeType(
-                        key=attribute["key"],
-                        name=attribute["name"],
-                    )
-                )
-            elif existing.key is None:
-                existing.key = attribute["key"]
-
+                db.add(AttributeType(key=attribute["key"], name=attribute["name"]))
         db.commit()
     finally:
         db.close()

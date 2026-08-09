@@ -1,8 +1,8 @@
-streamlit
-sqlalchemy 
-google-genai 
-python-dotenv 
-pydantic
-langgraph
-langchain-core
-langchain-google-genai
+streamlit>=1.40
+SQLAlchemy>=2.0
+google-genai>=1.0
+python-dotenv>=1.0
+pydantic>=2.0
+langgraph>=1.0
+langchain-core>=1.0
+langchain-google-genai>=2.0
