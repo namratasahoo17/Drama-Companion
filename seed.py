@@ -1,3 +1,5 @@
+"""Default drama attributes used by database seed logic."""
+
 DEFAULT_ATTRIBUTES = [
     {"key": "country", "name": "Country"},
     {"key": "episodes", "name": "Episodes"},

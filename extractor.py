@@ -1,9 +1,21 @@
-from llm import ask_gemini
-import json
+"""Text extraction utilities for review and preference data."""
 
-def extract_review(review_text):
-    prompt = f"""Extract the following into JSON.
-            Review : {review_text} Return only valid JSON.Return data that matches this schema. {{
+import json
+from llm import ask_gemini
+
+
+def _clean_json_response(response: str) -> str:
+    """Strip Markdown fencing and whitespace from model output."""
+    return response.replace("```json", "").replace("```", "").strip()
+
+
+def extract_review(review_text: str) -> dict:
+    """Extract a structured review object from free-form text."""
+    prompt = f"""
+Extract the following into JSON.
+Review: {review_text}
+Return only valid JSON matching this schema:
+{{
   "title": "",
   "overall_rating": 0,
   "aspects": [
@@ -13,18 +25,22 @@ def extract_review(review_text):
       "reason": ""
     }}
   ]
-}}"""
+}}
+"""
     response = ask_gemini(prompt)
-    response = response.replace("```json", "").replace("```", "").strip()
-    data = json.loads(response)
-    return(data)
+    response = _clean_json_response(response)
+    return json.loads(response)
 
-def extract_preferences(review_text,category_text):
-    prompt = f"""Extract the following into JSON.
-            Review : {review_text} Return a JSON array (a list), like this:
-{{"category": " ", "value": " ", "sentiment": 1}}, {{"category": " ", "value": " ", "sentiment": 1}}
-One object per preference found. Only use categories from this list: {category_text}"""
+
+def extract_preferences(review_text: str, category_text: str) -> list:
+    """Extract user preference records from review text."""
+    prompt = f"""
+Extract the following into JSON.
+Review: {review_text}
+Return a JSON array of objects like:
+{{"category": " ", "value": " ", "sentiment": 1}}
+Use only categories from this list: {category_text}
+"""
     response = ask_gemini(prompt)
-    response = response.replace("```json", "").replace("```", "").strip()
-    data = json.loads(response)
-    return(data)
+    response = _clean_json_response(response)
+    return json.loads(response)

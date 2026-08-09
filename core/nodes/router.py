@@ -5,10 +5,11 @@ from core.state import AppState
 structured_llm = llm.with_structured_output(RouterOutput)
 
 def format_history(recent_messages):
+    """Format recent conversation history for prompt context."""
     if not recent_messages:
         return "(no prior messages)"
     return "\n".join(f"{m['role']}: {m['message']}" for m in recent_messages)
- 
+
  
 def router_node(state: AppState):
     history_text = format_history(state.get("recent_messages"))

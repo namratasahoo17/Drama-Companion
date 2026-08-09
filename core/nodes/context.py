@@ -8,6 +8,7 @@ from metadata.service import save_metadata
 
 
 def drama_to_dict(drama):
+    """Convert a Drama model into a serializable dictionary."""
     return {
         "id": drama.id,
         "title": drama.title,

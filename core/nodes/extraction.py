@@ -5,6 +5,7 @@ from services import save_review, save_preferences
 CATEGORY_TEXT = "genre,pacing,trope,actor,ending_style"
 
 def extraction_node(state: AppState) -> AppState:
+    """Extract structured review and preference data from user input."""
     review_text = state["user_input"]
 
     data = extract_review(review_text)
